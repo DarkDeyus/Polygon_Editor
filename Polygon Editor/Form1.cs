@@ -48,6 +48,24 @@ namespace Polygon_Editor
 
         }
 
+        static public (double, double) PolarToCartesian(double radius, double angle)
+        {
+            double angleRadian = angle * Math.PI / 180;
+            double x = radius * Math.Cos(angleRadian);
+            double y = radius * Math.Sin(angleRadian);
+            return (x, y);
+        }
+        static public bool isInsidePolygon(List<Edge> edges, double x, double y)
+        {
+            int count = 0;
+            Edge cross = new Edge(new Vertex(x, y), new Vertex(10000, 10000));
+            foreach (Edge e in edges)
+            {
+                if (e.isIntersecting(cross))
+                    count++;
+            }
+            return count % 2 == 1;
+        }
         List<Vertex> DeepClone(List<Vertex> list)
         {
             List<Vertex> copy = new List<Vertex>();
@@ -93,7 +111,7 @@ namespace Polygon_Editor
                 else
                 {
                     e.restriction = Enums.EdgeRestriction.horizontal;
-                    fixConstraints(vertices, edges, e, null, 0, 0);
+                    //fixConstraints(vertices, edges, e, null, 0, 0);
                     pictureBox1.Refresh();
                 }
                     
@@ -119,7 +137,7 @@ namespace Polygon_Editor
                 else
                 {
                     e.restriction = Enums.EdgeRestriction.vertical;
-                    fixConstraints(vertices, edges, e, null, 0, 0);
+                    //fixConstraints(vertices, edges, e, null, 0, 0);
                     pictureBox1.Refresh();
                 }
                     
@@ -162,14 +180,7 @@ namespace Polygon_Editor
                 //    //to get the result in degrees
                 //    angle = angle * (180 / Math.PI);
                 //    return angle;
-                //}
-
-                double Angle(Vertex vertex, List<Vertex> list)
-                {
-                    int index = verticesList.FindIndex(u => u.X == v.X && u.Y == v.Y);
-                    return 0;
-                }
-
+                //}            
 
                 //int index = verticesList.FindIndex(u => u.X == v.X && u.Y == v.Y);
                 //double a = Angle(edgesList[(edgesList.Count + index - 1) % edgesList.Count], edgesList[index]);
@@ -298,7 +309,7 @@ namespace Polygon_Editor
 
             //e.Graphics.DrawLine(pen, edge.From.X, edge.From.Y, edge.To.X, edge.To.Y);
 
-            plotLine(edge.From.X, edge.From.Y, edge.To.X, edge.To.Y, e);
+            plotLine((int)edge.From.X, (int)edge.From.Y, (int)edge.To.X, (int)edge.To.Y, e);
         }
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
@@ -360,9 +371,7 @@ namespace Polygon_Editor
                             }
 
                         }
-
                         break;
-
                 }
             }
         }
@@ -376,22 +385,22 @@ namespace Polygon_Editor
                 switch(edge.restriction)
                 {
                     case Enums.EdgeRestriction.horizontal:
-                        e.Graphics.DrawIcon(Properties.Resources.horizontal, (edge.From.X + edge.To.X - Constants.iconSize) /2 , (edge.From.Y + edge.To.Y - Constants.iconSize) /2 + Constants.distance);
+                        e.Graphics.DrawIcon(Properties.Resources.horizontal, (int)(edge.From.X + edge.To.X - Constants.iconSize) /2 , (int)((edge.From.Y + edge.To.Y - Constants.iconSize) /2 + Constants.distance));
                         break;
                     case Enums.EdgeRestriction.vertical:
-                        e.Graphics.DrawIcon(Properties.Resources.vertical, (edge.From.X + edge.To.X - Constants.iconSize) / 2 + Constants.distance, (edge.From.Y + edge.To.Y - Constants.iconSize) / 2 );
+                        e.Graphics.DrawIcon(Properties.Resources.vertical, (int)((edge.From.X + edge.To.X - Constants.iconSize) / 2 + Constants.distance), (int)(edge.From.Y + edge.To.Y - Constants.iconSize) / 2 );
                         break;
                 }
             }
 
             foreach (Vertex v in vertices)
             {
-                Rectangle rect = new Rectangle(v.X - Constants.vertexSize / 2, v.Y - Constants.vertexSize / 2, Constants.vertexSize, Constants.vertexSize);
+                Rectangle rect = new Rectangle((int)(v.X - Constants.vertexSize / 2), ((int)v.Y - Constants.vertexSize / 2), Constants.vertexSize, Constants.vertexSize);
                 e.Graphics.FillEllipse(mySolidBrush, rect);
                 e.Graphics.DrawEllipse(Constants.pen, rect);
 
                 if(v.restriction == Enums.VertexRestriction.angle)
-                    e.Graphics.DrawIcon(Properties.Resources.angle, v.X - Constants.iconSize / 2 , v.Y + Constants.distance - Constants.iconSize / 2 );
+                    e.Graphics.DrawIcon(Properties.Resources.angle, (int)(v.X - Constants.iconSize) / 2 , (int)(v.Y + Constants.distance - Constants.iconSize / 2) );
                 
             }
         }
@@ -494,64 +503,8 @@ namespace Polygon_Editor
             }
             pictureBox1.Refresh();
         }
-        /*
-         *                     v1
-         *                       \
-         *                        \
-         *                       / \
-         *             degree-> |  v2 <- we're here
-         *                       \ /
-         *                        / <- restriction 
-         *                       /      
-         *                      v3
-         * 
-         */ 
-        (int x, int y) GetNewPoint(Vertex v1, Vertex v2, int degree , Enums.EdgeRestriction restriction, Vertex v3)
-        {
-            double DegreeToRadian(int deg)
-            {
-               return deg * Math.PI / 180; 
-            }
-            int newx = int.MaxValue;
-            int newy = int.MaxValue;
-            // new line with correct degree between the lines
-            double a = Math.Tan(DegreeToRadian(degree));
-            double b = v1.Y - a * v1.X;
-            
-            switch(restriction)
-            {
-                case Enums.EdgeRestriction.horizontal:
-                    newy = v3.Y;
 
-                    newx =  a == 0 ? (v3.X == b ? v3.X : int.MaxValue) : (int)((v3.Y - b) / a);
-                    /*
-                    if (a == 0)
-                    {
-                        // y = ax + b --a=0--> y = b
-                        if (v3.X == b)
-                            newx = b;
-                        else
-                            //will never be correct
-                            newx = int.MaxValue;
-                    }
-                    else
-                    newx = (int)((v3.Y - b) / a); 
-                    */
-                    break;
-                case Enums.EdgeRestriction.vertical:
-                    newx = v3.X;
-                    newy = (int)(a * newx + b);
-                    break;
-                case Enums.EdgeRestriction.none:
-                    // Find closest point on a line from given point
-                    // ??????????????????????????????????????????????
-                    break;
-                    
-            }
-            return (newx, newy);
-        }
-        //TODO: FIX IT, I HATE YOU ANGLES >:C
-        private bool fixConstraints(List<Vertex> vertices, List<Edge> edges, Edge e, Vertex oldVertex, int newX, int newY )
+        private bool fixConstraints(List<Vertex> vertices, List<Edge> edges, Edge e, Vertex oldVertex, int newX, int newY)
         {
             // Keeping a copy, as there is a possiblity of not being able to fullfill the constraints (for example angle - user inputting angle 180 when the angle is created by perpendicular line segments -> always 90*
             List<Vertex> verticesCopy = DeepClone(vertices);
@@ -560,6 +513,8 @@ namespace Polygon_Editor
             int currentVertex;
             int nextVertex;
             int count = 0;
+            int vectorX;
+            int vectorY;
             //Passed edge, so added a constraint on edge
             if (oldVertex == null)
             {
@@ -574,7 +529,7 @@ namespace Polygon_Editor
                 vertices[currentVertex].Y = newY;
             }
 
-            nextVertex = (startIndex + 1) % vertices.Count;           
+            nextVertex = (startIndex + 1) % vertices.Count;
             bool correct = false;
             //go right and fix
             do
@@ -605,7 +560,7 @@ namespace Polygon_Editor
             }
             while (!correct && currentVertex != startIndex);
             // Returned to the starting vertex, can't fix it
-            if(currentVertex == startIndex)
+            if (currentVertex == startIndex)
             {
                 vertices = verticesCopy;
                 return false;
@@ -614,7 +569,7 @@ namespace Polygon_Editor
             nextVertex = (startIndex - 1 + vertices.Count) % vertices.Count;
             correct = false;
             //go left and fix
-           while ( !correct && currentVertex != (startIndex + count) % vertices.Count )
+            while (!correct && currentVertex != (startIndex + count) % vertices.Count)
             {
                 Edge connecting = edges[nextVertex];
                 if (connecting.restriction == Enums.EdgeRestriction.none)
@@ -641,7 +596,7 @@ namespace Polygon_Editor
                 nextVertex = (nextVertex - 1 + vertices.Count) % vertices.Count;
             }
 
-           if(currentVertex == (startIndex + count) % vertices.Count)
+            if (currentVertex == (startIndex + count) % vertices.Count)
             {
                 vertices = verticesCopy;
                 return false;
@@ -649,5 +604,290 @@ namespace Polygon_Editor
 
             return true;
         }
+        public (double, double) GetAngle(Vertex vertex, List<Vertex> vertices, List<Edge> edges)
+        {
+
+            double FindDegree(double x1, double y1)
+            {               
+                double value = ((Math.Atan2(y1, x1) / Math.PI) * 180f);
+                if (value < 0) value += 360f;
+                return value;
+            }
+
+
+            int startIndex = vertices.FindIndex(u => u == vertex);
+            // edge forward from vertex
+            Edge firstEdge = edges[startIndex];
+            // edge behind the vertex
+            Edge secondEdge = edges[(startIndex - 1 + edges.Count) % edges.Count];
+
+            double x = secondEdge.From.X - vertex.X; //przesuwamy uklad by vert byl(0, 0)
+            double y = secondEdge.From.Y - vertex.Y;
+            double startAngle = FindDegree(x, y); //wyznaczenie katu „początkowego”
+            x = firstEdge.To.X - vertex.X;
+            y = firstEdge.To.Y - vertex.Y;
+            double endAngle = FindDegree(x, y); //analogicznie do drugiego
+            if (endAngle < startAngle) endAngle += 360; //normowanie by start < end
+            float testAngle = (float)(startAngle + endAngle) / 2; //punkt testowy
+            //x y punktu testowego mielismy go w polarnych wczesniej 
+            (double tx, double ty) = PolarToCartesian(3, testAngle);
+
+            tx += vertex.X;
+            ty += vertex.Y;
+            //jako ze wybralismy ktory kat niekoniecznie dobry no to sprawdzamy czy 
+            //był dobry. Jesli nie to podmieniamy co robi ten if
+
+            if (!isInsidePolygon(edges, (int)Math.Round(tx, 0), (int)Math.Round(ty))) ;           
+            {
+                double helpAngle = 360 - Math.Abs(endAngle - startAngle);
+                startAngle = endAngle;
+                endAngle = startAngle + helpAngle;
+            }
+            return (startAngle, endAngle);
+
+            
+        }
+
+
+        /*
+         *                     v1
+         *                       \
+         *                        \
+         *                       / \
+         *             degree-> |  v2 <- we're here
+         *                       \ /
+         *                        / <- restriction 
+         *                       /      
+         *                      v3
+         * 
+         */
+        //(double x, double y) GetNewPoint(Vertex v1, Vertex v2, int degree , Enums.EdgeRestriction restriction, Vertex v3)
+        //{
+        //    double DegreeToRadian(int deg)
+        //    {
+        //       return deg * Math.PI / 180; 
+        //    }
+        //    double newx = int.MaxValue;
+        //    double newy = int.MaxValue;
+        //    // new line with correct degree between the lines
+        //    //TODO: WRONG D:
+        //    double a = Math.Tan(DegreeToRadian(degree));
+        //    bool verticalLine = degree / 90 == degree % 90; //tg (90*) is -inf/inf
+        //    double b = verticalLine? v1.Y : v1.Y - a * v1.X;
+
+        //    switch(restriction)
+        //    {
+        //        case Enums.EdgeRestriction.horizontal:
+        //            newy = v3.Y;
+
+        //            //newx =  a == 0 || a ? (v3.X == b ? v3.X : int.MaxValue) : (int)((v3.Y - b) / a);
+
+        //            if (a == 0)
+        //            {
+        //                // y = ax + b --a=0--> y = b
+        //                if (v3.X == b)
+        //                    newx = b;
+        //                else
+        //                    //will never be correct
+        //                    newx = int.MaxValue;
+        //            }
+        //            else if (verticalLine)
+        //            {
+        //                newx = v2.X;
+        //                newx = (int)((v3.Y - b) / a);
+        //            }
+
+
+        //            break;
+        //        case Enums.EdgeRestriction.vertical:
+
+        //            if(verticalLine)
+        //            {
+        //                newx = v3.X == v2.X ? v3.X : int.MaxValue;
+        //            }
+        //            else
+        //            {
+        //                newx = v3.X;
+        //                newy = (int)(a * newx + b);
+        //            }
+
+        //            break;
+        //        case Enums.EdgeRestriction.none:
+        //            Point FindPerpendicular(Point start, Point end, Point target)
+        //            {
+        //                //HORIZONTAL
+        //                if (end.Y == start.Y)
+        //                {
+        //                    if (start.X > end.X)
+        //                    {
+        //                        Point tmp = start;
+        //                        start = end;
+        //                        end = tmp;
+        //                    }
+        //                    if (target.X < start.X)
+        //                    {
+        //                        return start;
+        //                    }
+        //                    if (target.X > end.X)
+        //                    {
+        //                        return end;
+        //                    }
+        //                    return new Point(target.X, start.Y);
+        //                }
+
+        //                if (start.Y > end.Y)
+        //                {
+        //                    Point tmp = start;
+        //                    start = end;
+        //                    end = tmp;
+        //                }
+        //                //VERTICAL
+        //                if (end.X == start.X)
+        //                {
+        //                    if (target.Y < start.Y)
+        //                    {
+        //                        return start;
+        //                    }
+        //                    if (target.Y > end.Y)
+        //                    {
+        //                        return end;
+        //                    }
+        //                    return new Point(start.X, target.Y);
+        //                }
+
+        //                double a1 = (double)(end.Y - start.Y) / (end.X - start.X);
+        //                double b1 = start.Y - a1 * start.X;
+
+        //                double aPerp = -1 / a1;
+        //                double bPerp = target.Y - aPerp * target.X;
+
+        //                double bMax = end.Y - aPerp * end.X;
+        //                double bMin = start.Y - aPerp * start.X;
+
+        //                if (bPerp > bMax)
+        //                {
+        //                    return end;
+        //                }
+        //                if (bPerp < bMin)
+        //                {
+        //                    return start;
+        //                }
+
+        //                double x0 = (a1 * (bPerp - b1)) / (a1 * a1 + 1);
+        //                double y0 = a1 * x0 + b1;
+
+        //                return new Point((int)x0, (int)y0);
+
+        //            }
+        //            int x = pictureBox1.Bottom;
+        //            // Find closest point on a line from given point
+        //            // ??????????????????????????????????????????????
+        //            Point point = FindPerpendicular(new Point((int)v2.X, (int)v2.Y), new Point(x, (int)(a * x + b)), new Point((int)v3.X, (int)v3.Y);
+        //            newx = point.X;
+        //            newy = point.Y;
+        //            break;
+
+        //    }
+        //    return (newx, newy);
+        //}
+        ////TODO: FIX IT, I HATE YOU ANGLES >:C
+        //private bool fixConstraints(List<Vertex> vertices, List<Edge> edges, Edge e, Vertex oldVertex, int newX, int newY )
+        //{
+        //    // Keeping a copy, as there is a possiblity of not being able to fullfill the constraints (for example angle - user inputting angle 180 when the angle is created by perpendicular line segments -> always 90*
+        //    List<Vertex> verticesCopy = DeepClone(vertices);
+
+        //    int startIndex;
+        //    int currentVertex;
+        //    int nextVertex;
+        //    int count = 0;
+        //    //Passed edge, so added a constraint on edge
+        //    if (oldVertex == null)
+        //    {
+        //        //One point is correct, so i am taking the one with lower index in the list
+        //        currentVertex = startIndex = vertices.FindIndex(u => u.X == e.From.X && u.Y == e.From.Y);
+        //    }
+        //    //Passed a vertex, so either moved it or added an angle constraint 
+        //    else
+        //    {
+        //        currentVertex = startIndex = vertices.FindIndex(u => u.X == oldVertex.X && u.Y == oldVertex.Y);
+        //        vertices[currentVertex].X = newX;
+        //        vertices[currentVertex].Y = newY;
+        //    }
+
+        //    nextVertex = (startIndex + 1) % vertices.Count;           
+        //    bool correct = false;
+        //    //go right and fix
+        //    do
+        //    {//add vertex restriction plz
+        //        Edge connecting = edges[currentVertex];
+        //        if (connecting.restriction == Enums.EdgeRestriction.none)
+        //        {
+        //            correct = true;
+        //        }
+        //        else if (connecting.restriction == Enums.EdgeRestriction.horizontal)
+        //        {
+        //            if (vertices[nextVertex].Y == vertices[currentVertex].Y)
+        //                correct = true;
+        //            else
+        //                vertices[nextVertex].Y = vertices[currentVertex].Y;
+
+        //        }
+        //        else if (connecting.restriction == Enums.EdgeRestriction.vertical)
+        //        {
+        //            if (vertices[nextVertex].X == vertices[currentVertex].X)
+        //                correct = true;
+        //            else
+        //                vertices[nextVertex].X = vertices[currentVertex].X;
+        //        }
+        //        count++;
+        //        currentVertex = nextVertex;
+        //        nextVertex = (nextVertex + 1) % vertices.Count;
+        //    }
+        //    while (!correct && currentVertex != startIndex);
+        //    // Returned to the starting vertex, can't fix it
+        //    if(currentVertex == startIndex)
+        //    {
+        //        vertices = verticesCopy;
+        //        return false;
+        //    }
+        //    currentVertex = startIndex;
+        //    nextVertex = (startIndex - 1 + vertices.Count) % vertices.Count;
+        //    correct = false;
+        //    //go left and fix
+        //   while ( !correct && currentVertex != (startIndex + count) % vertices.Count )
+        //    {
+        //        Edge connecting = edges[nextVertex];
+        //        if (connecting.restriction == Enums.EdgeRestriction.none)
+        //        {
+        //            correct = true;
+        //        }
+        //        else if (connecting.restriction == Enums.EdgeRestriction.horizontal)
+        //        {
+        //            if (vertices[nextVertex].Y == vertices[currentVertex].Y)
+        //                correct = true;
+        //            else
+        //                vertices[nextVertex].Y = vertices[currentVertex].Y;
+
+        //        }
+        //        else if (connecting.restriction == Enums.EdgeRestriction.vertical)
+        //        {
+        //            if (vertices[nextVertex].X == vertices[currentVertex].X)
+        //                correct = true;
+        //            else
+        //                vertices[nextVertex].X = vertices[currentVertex].X;
+        //        }
+
+        //        currentVertex = nextVertex;
+        //        nextVertex = (nextVertex - 1 + vertices.Count) % vertices.Count;
+        //    }
+
+        //   if(currentVertex == (startIndex + count) % vertices.Count)
+        //    {
+        //        vertices = verticesCopy;
+        //        return false;
+        //    }
+
+        //    return true;
+        //}
     }
 }

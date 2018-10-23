@@ -10,5 +10,11 @@ namespace Polygon_Editor
     {
         public List<Vertex> vertices;
         public List<Edge> edges;
+
+        public Polygon()
+        {
+            vertices = new List<Vertex>();
+            edges = new List<Edge>();
+        }
     }
 }

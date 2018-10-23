@@ -23,6 +23,5 @@ namespace Polygon_Editor
         static public int distance = 20;
         //icon size
         static public int iconSize = 16;
-
     }
 }
