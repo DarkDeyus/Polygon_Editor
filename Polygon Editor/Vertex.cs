@@ -38,11 +38,11 @@ namespace Polygon_Editor
                     return i;
             }
             return -1;
-        }
+        }       
 
-        public Vertex Clone()
+        public static double CrossProduct(Vertex v1, Vertex v2)
         {
-            return new Vertex(X, Y, restriction, angle);
+            return v1.X * v2.Y - v2.X * v1.Y;
         }
     }
 
