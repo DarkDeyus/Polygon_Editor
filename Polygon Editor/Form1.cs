@@ -145,12 +145,13 @@ namespace Polygon_Editor
             if (v.restriction == Enums.VertexRestriction.angle)
             {
                 v.restriction = Enums.VertexRestriction.none;
+                pictureBox1.Refresh();
             }
             else if (v.restriction == Enums.VertexRestriction.none)
             {
-                
-                double a = 0;
-                string value = a.ToString();
+                (float startAngle , float endAngle) = GetAngle(v);
+                double currentAngle = Math.Abs(startAngle - endAngle);
+                string value = currentAngle.ToString();
                 if (InputBox.Show("Angle restriction", "Please input chosen angle for restriction ( 0° < α < 360° )", ref value) == DialogResult.OK)
                 {
                     if (double.TryParse(value, out double result) && result > 0 && result < 360)
